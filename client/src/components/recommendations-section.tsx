@@ -5,6 +5,7 @@ import { Film, Tv, Star, Calendar, RotateCcw, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import MovieModal from "./movie-modal";
+import InlineAdBanner from "./inline-ad-banner";
 
 interface RecommendationsSectionProps {
   recommendations: string;
@@ -160,11 +161,14 @@ export default function RecommendationsSection({ recommendations, isLoading }: R
           <div className="space-y-4">
             {parsedRecommendations.length > 0 ? (
               parsedRecommendations.map((rec, index) => (
-                <MovieRecommendationCard 
-                  key={index} 
-                  rec={rec} 
-                  onMovieClick={setSelectedMovie} 
-                />
+                <div key={index}>
+                  <MovieRecommendationCard 
+                    rec={rec} 
+                    onMovieClick={setSelectedMovie} 
+                  />
+                  {/* Show inline ad after 3rd recommendation */}
+                  {index === 2 && <InlineAdBanner />}
+                </div>
               ))
             ) : (
               // Fallback display for raw text
