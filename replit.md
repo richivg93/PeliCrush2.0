@@ -106,6 +106,7 @@ PeliCrush is a full-stack movie recommendation application that uses AI (Cohere 
 - June 27, 2025: Base de datos PostgreSQL agregada - migrando de almacenamiento en memoria a base de datos persistente
 - June 27, 2025: Carrusel actualizado con películas de tendencia reales desde TMDB API
 - June 27, 2025: Sistema de monetización implementado - banner superior, banner inline en recomendaciones y banner flotante CTA
+- June 27, 2025: Banner superior convertido a publicidad externa rotatoria - muestra anuncios de iPhone, Netflix, Amazon Prime y Spotify que cambian cada 8 segundos
 
 ## User Preferences
 
