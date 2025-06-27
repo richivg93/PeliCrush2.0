@@ -102,7 +102,8 @@ PeliCrush is a full-stack movie recommendation application that uses AI (Cohere 
 - **Sessions**: PostgreSQL-based session storage for scalability
 
 ## Changelog
-- June 27, 2025. Initial setup
+- June 27, 2025: Aplicación base de PeliCrush completada con diseño negro/naranja, carrusel de películas, búsqueda con IA y diseño responsive
+- June 27, 2025: Base de datos PostgreSQL agregada - migrando de almacenamiento en memoria a base de datos persistente
 
 ## User Preferences
 

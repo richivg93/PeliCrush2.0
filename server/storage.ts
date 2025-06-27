@@ -1,4 +1,6 @@
 import { users, recommendations, type User, type InsertUser, type Recommendation, type InsertRecommendation } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -8,53 +10,41 @@ export interface IStorage {
   getRecentRecommendations(limit?: number): Promise<Recommendation[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private recommendations: Map<number, Recommendation>;
-  private currentUserId: number;
-  private currentRecommendationId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.recommendations = new Map();
-    this.currentUserId = 1;
-    this.currentRecommendationId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async createRecommendation(insertRecommendation: InsertRecommendation): Promise<Recommendation> {
-    const id = this.currentRecommendationId++;
-    const recommendation: Recommendation = { 
-      ...insertRecommendation, 
-      id,
-      createdAt: new Date()
-    };
-    this.recommendations.set(id, recommendation);
+    const [recommendation] = await db
+      .insert(recommendations)
+      .values(insertRecommendation)
+      .returning();
     return recommendation;
   }
 
   async getRecentRecommendations(limit: number = 10): Promise<Recommendation[]> {
-    const recs = Array.from(this.recommendations.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    const recs = await db
+      .select()
+      .from(recommendations)
+      .orderBy(recommendations.createdAt)
+      .limit(limit);
     return recs;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
