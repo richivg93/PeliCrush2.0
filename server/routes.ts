@@ -156,6 +156,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get trending movies for carousel
+  app.get("/api/movies/trending/now", async (req, res) => {
+    try {
+      if (!TMDB_API_KEY) {
+        throw new Error('TMDB API key not configured');
+      }
+
+      const response = await fetch(
+        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=es-ES`
+      );
+
+      if (!response.ok) {
+        throw new Error(`TMDB API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      res.json({ movies: data.results.slice(0, 8) }); // Get top 8 trending movies
+    } catch (error) {
+      console.error('Error getting trending movies:', error);
+      res.status(500).json({ message: "Error obteniendo películas de tendencia" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
