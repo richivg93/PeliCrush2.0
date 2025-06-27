@@ -5,6 +5,7 @@ import { insertRecommendationSchema } from "@shared/schema";
 import { z } from "zod";
 
 const COHERE_API_KEY = process.env.COHERE_API_KEY || process.env.COHERE_API_KEY_ENV_VAR || "default_key";
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
 async function getCohereRecommendations(userQuery: string): Promise<string> {
   try {
@@ -46,6 +47,52 @@ Formato de respuesta:
   }
 }
 
+async function searchMovieInTMDB(title: string): Promise<any> {
+  try {
+    if (!TMDB_API_KEY) {
+      throw new Error('TMDB API key not configured');
+    }
+
+    const response = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=es-ES`
+    );
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.results[0] || null;
+  } catch (error) {
+    console.error('Error searching movie in TMDB:', error);
+    return null;
+  }
+}
+
+async function getMovieDetails(movieId: number): Promise<any> {
+  try {
+    if (!TMDB_API_KEY) {
+      throw new Error('TMDB API key not configured');
+    }
+
+    const [detailsResponse, providersResponse] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=es-ES`),
+      fetch(`https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`)
+    ]);
+
+    const details = await detailsResponse.json();
+    const providers = await providersResponse.json();
+
+    return {
+      ...details,
+      watch_providers: providers.results
+    };
+  } catch (error) {
+    console.error('Error getting movie details from TMDB:', error);
+    return null;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get recommendations from Cohere AI
   app.post("/api/recommendations", async (req, res) => {
@@ -82,6 +129,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting recent recommendations:', error);
       res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Search movie in TMDB
+  app.get("/api/movies/search/:title", async (req, res) => {
+    try {
+      const { title } = req.params;
+      const movie = await searchMovieInTMDB(title);
+      res.json({ movie });
+    } catch (error) {
+      console.error('Error searching movie:', error);
+      res.status(500).json({ message: "Error buscando película" });
+    }
+  });
+
+  // Get movie details from TMDB
+  app.get("/api/movies/:id", async (req, res) => {
+    try {
+      const movieId = parseInt(req.params.id);
+      const movieDetails = await getMovieDetails(movieId);
+      res.json({ movie: movieDetails });
+    } catch (error) {
+      console.error('Error getting movie details:', error);
+      res.status(500).json({ message: "Error obteniendo detalles de película" });
     }
   });
 
